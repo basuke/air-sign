@@ -1,6 +1,7 @@
 {
 	"include": [
 		"$(MODDABLE)/examples/manifest_base.json",
+		"$(MODDABLE)/examples/manifest_commodetto.json",
 		"$(MODDABLE)/examples/manifest_net.json",
 		"$(MODDABLE)/modules/network/mdns/manifest.json"
 	],
@@ -10,6 +11,9 @@
 			"./network",
 			"$(MODULES)/network/http/*"
 		]
+	},
+	"resources": {
+		"*-mask": "$(MODDABLE)/examples/assets/fonts/OpenSans-Semibold-18"
 	},
 	"preload": [
 		"http"
