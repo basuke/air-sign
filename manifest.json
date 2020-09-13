@@ -7,6 +7,7 @@
 	"modules": {
 		"*": [
 			"./main",
+			"./network",
 			"$(MODULES)/network/http/*"
 		]
 	},
