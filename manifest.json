@@ -13,7 +13,7 @@
 		]
 	},
 	"resources": {
-		"*-mask": "$(MODDABLE)/examples/assets/fonts/OpenSans-Semibold-18"
+		"*-mask": "$(MODDABLE)/examples/assets/fonts/OpenSans-Semibold-20"
 	},
 	"preload": [
 		"http"
