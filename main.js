@@ -4,7 +4,14 @@
 
 import Net from "net"
 import config from "mc/config";
-import { HandyServer, textResponse, registerHostName } from "network";
+import {
+    HandyServer,
+    jsonResponse,
+    okResponse,
+    errorResponse,
+    notFound,
+    registerHostName
+} from "network";
 import Poco from "commodetto/Poco";
 import Resource from "Resource";
 import parseBMF from "commodetto/parseBMF";
@@ -26,55 +33,12 @@ let hostName = undefined;
 
 registerHostName(config.hostname ?? "air-sign", value => {
     hostName = value;
+    params.text = url();
     update();
 });
 
-const server = new HandyServer({
-    port,
-    verbose: ('verbose' in config ? !!config.verbose : true),
-});
-
-server.onRequest = ({method, path, contentType, body}) => {
-    const ip = Net.get("IP");
-    const ssid = Net.get("SSID");
-    return textResponse(`Client requested path ${path}. Server host name "${hostName}.local" at address ${ip} on network "${ssid}".\n`);
-};
-
-const INFO = 0;
-const COLOR = 1;
-const IMAGE = 2;
-
-let current = { mode: INFO };
-
-function update() {
-    switch (current.mode) {
-        case INFO:
-            showHostName();
-            break;
-
-        case COLOR:
-            paint(current);
-    }
-}
-
-function showHostName() {
-    const font = fonts.L;
-    const orange = makeColor("orange");
-    const white = makeColor("white");
-
-    render.begin();
-        render.fillRectangle(orange, 0, 0, render.width, render.height);
-        const text = 'http://' + (hostName ? hostName + '.local' : Net.get("IP"));
-        render.drawText(text, font, white,
-            (render.width - render.getTextWidth(text, font)) >> 1,
-            (render.height - font.height) >> 1);
-    render.end();
-}
-
-function paint({color}) {
-    render.begin();
-        render.fillRectangle(color, 0, 0, render.width, render.height);
-    render.end();
+function url() {
+    return 'http://' + (hostName ? hostName + '.local' : Net.get("IP"));
 }
 
 function hex(str, offset, count) {
@@ -139,5 +103,108 @@ function makeColor(name) {
     const [red, green, blue, alpha] = rgba(name);
     return render.makeColor(red, green, blue);
 }
+
+const params = {
+    text: url(),
+    color: makeColor('white'),
+    background: makeColor('#ccc'),
+    font: fonts.L,
+    image: null,
+};
+
+function update() {
+    const {text, color, background, font} = params;
+
+    trace(`${text}\n`);
+    render.begin();
+        render.fillRectangle(background, 0, 0, render.width, render.height);
+        render.drawText(text, font, color,
+            (render.width - render.getTextWidth(text, font)) >> 1,
+            (render.height - font.height) >> 1);
+    render.end();
+}
+
+const server = new HandyServer({
+    port,
+    verbose: ('verbose' in config ? !!config.verbose : true),
+});
+
+const textType = 'text/plain';
+const imageType = 'image/bmp';
+
+function ifText(contentType, prepareIt, doIt) {
+    if (contentType !== textType) return errorResponse("Text only");
+    const value = prepareIt();
+    if (value === undefined) return errorResponse("Invalid value");
+    doIt(value);
+    update();
+    return okResponse();
+}
+
+server.onGet = ({path}) => {
+    switch (path) {
+        case '/info':
+            return jsonResponse({
+                'ip': Net.get("IP"),
+                'ssid': Net.get("SSID"),
+                hostName,
+            });
+
+        default:
+            return notFound();
+    }
+};
+
+server.onPost = ({path, contentType, body}) => {
+    switch (path) {
+        case '/text':
+            return ifText(contentType, () => body, value => params.text = value);
+
+        case '/color':
+            return ifText(contentType, () => makeColor(body), value => params.color = value);
+
+        case '/background':
+            return ifText(contentType, () => makeColor(body), value => params.background = value);
+    
+        case '/font':
+            return ifText(contentType, () => fonts[body], value => params.font = value);
+
+        default:
+            return notFound();
+    }
+};
+
+server.onDelete = ({path}) => {
+    switch (path) {
+        case '/':
+            params.text = url();
+            params.color = makeColor('white');
+            params.background = makeColor('#ccc');
+            params.font = fonts.L;
+            break;
+
+        case '/text':
+            params.text = url();
+            break;
+
+        case '/color':
+            params.color = makeColor('white');
+            break;
+
+        case '/background':
+            params.background = makeColor('black');
+            break;
+
+        case '/font':
+            params.font = fonts.L;
+            break;
+
+        default:
+            return notFound();
+    }
+
+    update();
+    return okResponse();
+};
 
 update();

@@ -47,6 +47,9 @@ export class HandyServer extends Server {
                     request.receiveHeader(arg1, arg2);
                     break;
 
+                case Server.headersComplete:
+                    return String
+
                 case Server.requestComplete:
                     request.body = arg1;
                     break;
@@ -62,8 +65,29 @@ export class HandyServer extends Server {
         };
     }
 
-    onRequest({method, path, contentType, body}) {
-        return errorResponse("Not found", 403);
+    onRequest(request) {
+        switch (request.method) {
+            case 'GET':
+                return this.onGet(request);
+            case 'POST':
+                return this.onPost(request);
+            case 'DELETE':
+                return this.onDelete(request);
+            default:
+                return notFound();
+        }
+    }
+
+    onGet({path, contentType, body}) {
+        return notFound();
+    }
+
+    onPost({path, contentType, body}) {
+        return notFound();
+    }
+
+    onDelete({path, contentType, body}) {
+        return notFound();
     }
 };
 
@@ -88,6 +112,14 @@ export function jsonResponse(data, status = 200, headers = {}) {
     return response(JSON.stringify(data), status, { "Content-Type": "application/json", ...headers });
 }
 
+export function okResponse(status = 200, headers = {}) {
+    return textResponse("OK", status, headers);
+}
+
 export function errorResponse(message, status = 400, headers = {}) {
     return textResponse(message, status, headers);
+}
+
+export function notFound() {
+    return errorResponse("Not found", 403);
 }
