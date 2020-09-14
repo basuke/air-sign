@@ -118,9 +118,15 @@ function update() {
     trace(`${text}\n`);
     render.begin();
         render.fillRectangle(background, 0, 0, render.width, render.height);
-        render.drawText(text, font, color,
-            (render.width - render.getTextWidth(text, font)) >> 1,
-            (render.height - font.height) >> 1);
+
+        const lines = text.split("\n");
+        let y = (render.height - font.height * lines.length) >> 1;
+
+        for (const line of lines) {
+            render.drawText(line, font, color,
+                (render.width - render.getTextWidth(line, font)) >> 1, y);
+            y += font.height;
+        }
     render.end();
 }
 
