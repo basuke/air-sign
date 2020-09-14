@@ -15,7 +15,7 @@ if (!port) {
     return;
 }
 
-let render = new Poco(screen, { displayListLength: 2048 });
+let render = new Poco(screen, { displayListLength: 2048, rotation: config.rotation });
 let fonts = {
     S: parseBMF(new Resource("OpenSans-Semibold-16.bf4")),
     M: parseBMF(new Resource("OpenSans-Semibold-20.bf4")),

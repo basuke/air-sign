@@ -19,6 +19,9 @@
 			"$(MODDABLE)/examples/assets/fonts/OpenSans-Semibold-28"
 		]
 	},
+	"config": {
+		"rotation": 270
+	},
 	"preload": [
 		"http"
 	]
