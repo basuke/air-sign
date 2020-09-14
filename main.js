@@ -16,7 +16,11 @@ if (!port) {
 }
 
 let render = new Poco(screen, { displayListLength: 2048 });
-let font = parseBMF(new Resource("OpenSans-Semibold-20.bf4"));
+let fonts = {
+    S: parseBMF(new Resource("OpenSans-Semibold-16.bf4")),
+    M: parseBMF(new Resource("OpenSans-Semibold-20.bf4")),
+    L: parseBMF(new Resource("OpenSans-Semibold-28.bf4")),
+};
 
 let hostName = undefined;
 
@@ -54,6 +58,7 @@ function update() {
 }
 
 function showHostName() {
+    const font = fonts.L;
     const orange = makeColor("orange");
     const white = makeColor("white");
 
