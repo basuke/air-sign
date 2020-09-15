@@ -3,14 +3,17 @@
 		"$(MODDABLE)/examples/manifest_base.json",
 		"$(MODDABLE)/examples/manifest_commodetto.json",
 		"$(MODDABLE)/examples/manifest_net.json",
+		"$(MODDABLE)/modules/files/file/manifest.json",
 		"$(MODDABLE)/modules/network/mdns/manifest.json"
 	],
 	"modules": {
 		"*": [
 			"./main",
 			"./network",
+			"./screen",
 			"$(MODULES)/network/http/*"
-		]
+		],
+		"commodetto/readJPEG": "$(COMMODETTO)/commodettoReadJPEG"
 	},
 	"resources": {
 		"*-mask": [

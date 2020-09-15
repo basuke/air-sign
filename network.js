@@ -1,5 +1,6 @@
 import { Server } from "http"
 import MDNS from "mdns";
+import { File } from "file";
 
 export function registerHostName(hostName, callback) {
     new MDNS({hostName}, (message, value) => {
@@ -13,7 +14,9 @@ class Request {
         this.method = method;
         this.path = path;
         this.contentType = "application/octed";
+        this.contentLength = undefined;
         this.body = undefined;
+        this.file = undefined;
     }
 
     receiveHeader(name, value) {
@@ -21,21 +24,31 @@ class Request {
             case 'content-type':
                 this.contentType = value;
                 break;
+            
+            case 'content-length':
+                this.contentLength = value;
+                break;
         }
     }
 
     log() {
         trace(`${this.method} ${this.path}\n`);
+        if (this.body) trace(`length: ${this.contentLength}\n${this.body}\n`);
+        if (this.file) trace(`length: ${this.contentLength}\n<${this.file}>\n`);
     }
 };
+
+const cacheFileName = 'cache';
 
 export class HandyServer extends Server {
     constructor(dictionary) {
         super(dictionary);
 
         const verbose = dictionary.verbose;
+        const root = dictionary.root;
 
         let request = undefined;
+        let file = undefined;
 
         this.callback = (message, arg1, arg2) => {
             switch (message) {
@@ -48,10 +61,31 @@ export class HandyServer extends Server {
                     break;
 
                 case Server.headersComplete:
-                    return String
+                    if (request.contentLength >= 1024) {
+                        if (File.exists(root + cacheFileName))
+                            File.delete(root + cacheFileName);
+                        file = new File(root + cacheFileName, true);
+                        return true; // handling by myself
+                    } else {
+                        const [type, subtype] = request.contentType.split('/');
+                        return type === 'text' ? String : ArrayBuffer;
+                    }
+
+                case Server.requestFragment:
+                    /* arg2 = socket, arg1 = readable size */
+					const fragment = arg2.read(ArrayBuffer, arg1);
+                    file.write(fragment);
+                    break;
 
                 case Server.requestComplete:
-                    request.body = arg1;
+                    if (file) {
+                        file.close();
+                        file = undefined;
+
+                        request.file = root + cacheFileName;
+                    } else {
+                        request.body = arg1;
+                    }
                     break;
 
                 case Server.prepareResponse:
@@ -122,4 +156,15 @@ export function errorResponse(message, status = 400, headers = {}) {
 
 export function notFound() {
     return errorResponse("Not found", 403);
+}
+
+export function ifTypeIs(expectedType, contentType, prepareIt, doIt, update) {
+    if (contentType !== expectedType) return errorResponse("Text only");
+
+    const value = prepareIt();
+    if (value === undefined) return errorResponse("Invalid value");
+
+    doIt(value);
+    update();
+    return okResponse();
 }
