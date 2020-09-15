@@ -50,7 +50,9 @@ export class HandyServer extends Server {
         let request = undefined;
         let file = undefined;
 
-        this.callback = (message, arg1, arg2) => {
+        const server = this;
+
+        this.callback = function(message, arg1, arg2) {
             switch (message) {
                 case Server.status:
                     request = new Request(arg2, arg1);
@@ -72,8 +74,7 @@ export class HandyServer extends Server {
                     }
 
                 case Server.requestFragment:
-                    /* arg2 = socket, arg1 = readable size */
-					const fragment = arg2.read(ArrayBuffer, arg1);
+					const fragment = this.read(ArrayBuffer, arg1);
                     file.write(fragment);
                     break;
 
@@ -90,7 +91,7 @@ export class HandyServer extends Server {
 
                 case Server.prepareResponse:
                     if (verbose) request.log();
-                    return this.onRequest(request);
+                    return server.onRequest(request);
 
                 case Server.responseComplete:
                     request = undefined;
