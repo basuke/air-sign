@@ -4,6 +4,7 @@
 
 import Net from "net"
 import config from "mc/config";
+import Timer from "timer";
 import {
     HandyServer,
     ifTypeIs,
@@ -37,32 +38,45 @@ function url() {
     return 'http://' + (hostName ? hostName + '.local' : Net.get("IP"));
 }
 
-const params = {
-    text: url(),
-    color: makeColor('white'),
-    background: makeColor('black'),
-    font: fonts.L,
-    image: null,
-};
+const params = {};
+
+function reset() {
+    params.text = url();
+    params.color = makeColor('white');
+    params.background = makeColor('black');
+    params.font = fonts.L;
+    params.image = null;
+
+    update();
+}
 
 function update() {
     const {text, color, background, font, image} = params;
 
     trace(`${text}\n`);
     draw(render => {
-        render.fillRectangle(background, 0, 0, render.width, render.height);
-
-        if (image) {
-            render.drawJpeg(image);
+        if (background !== undefined) {
+            render.fillRectangle(background, 0, 0, render.width, render.height);
         }
 
-        const lines = text.split("\n");
-        let y = (render.height - font.height * lines.length) >> 1;
+        if (image) {
+            if (!render.drawJpeg(image)) {
+                trace("Failed to render this JPEG.\n");
+                params.image = null;
+                Timer.set(update, 0);
+                return;
+            }
+        }
 
-        for (const line of lines) {
-            render.drawText(line, font, color,
-                (render.width - render.getTextWidth(line, font)) >> 1, y);
-            y += font.height;
+        if (text && color !== undefined) {
+            const lines = text.split("\n");
+            let y = (render.height - font.height * lines.length) >> 1;
+
+            for (const line of lines) {
+                render.drawText(line, font, color,
+                    (render.width - render.getTextWidth(line, font)) >> 1, y);
+                y += font.height;
+            }
         }
     });
 }
@@ -78,6 +92,10 @@ const imageType = 'image/jpeg';
 
 server.onGet = ({path}) => {
     switch (path) {
+        case '/reset':
+            reset();
+            return okResponse();
+
         case '/info':
             return jsonResponse({
                 ip: Net.get("IP"),
@@ -138,23 +156,23 @@ server.onPost = ({path, contentType, body, file}) => {
 server.onDelete = ({path}) => {
     switch (path) {
         case '/':
-            params.text = url();
-            params.color = makeColor('white');
-            params.background = makeColor('black');
+            params.text = undefined;
+            params.color = undefined;
+            params.background = undefined;
             params.font = fonts.L;
             params.image = undefined;
             break;
 
         case '/text':
-            params.text = url();
+            params.text = undefined;
             break;
 
         case '/color':
-            params.color = makeColor('white');
+            params.color = undefined;
             break;
 
         case '/background':
-            params.background = makeColor('black');
+            params.background = undefined;
             break;
 
         case '/font':
@@ -173,4 +191,4 @@ server.onDelete = ({path}) => {
     return okResponse();
 };
 
-update();
+reset();

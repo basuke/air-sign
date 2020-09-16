@@ -144,15 +144,15 @@ export function textResponse(text, status = 200, headers = {}) {
 }
 
 export function jsonResponse(data, status = 200, headers = {}) {
-    return response(JSON.stringify(data), status, { "Content-Type": "application/json", ...headers });
+    return response(JSON.stringify(data) + "\n", status, { "Content-Type": "application/json", ...headers });
 }
 
 export function okResponse(status = 200, headers = {}) {
-    return textResponse("OK", status, headers);
+    return jsonResponse({success:true}, status, headers);
 }
 
 export function errorResponse(message, status = 400, headers = {}) {
-    return textResponse(message, status, headers);
+    return jsonResponse({success: false, error: message}, status, headers);
 }
 
 export function notFound() {

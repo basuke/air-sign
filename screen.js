@@ -94,23 +94,34 @@ render.drawJpeg = function(path) {
     const jpeg = new JPEG();
     let file = new File(path);
 
-    while (file) {
-        while (file) {
-            const bytes = file.read(ArrayBuffer, 1024);
-            jpeg.push(bytes);
-            if (file.position === file.length) {
-                jpeg.push();
-                file.close();
-                file = undefined;
-            }
-            if (jpeg.ready) break;
-        }
+    try {
+        render.end();
 
-        while (jpeg.ready) {
-            const block = jpeg.read();
-            this.begin(block.x, block.y, block.width, block.height);
-            this.drawBitmap(block, block.x, block.y);
-            this.end();
+        while (file) {
+            while (file) {
+                const bytes = file.read(ArrayBuffer, 1024);
+                jpeg.push(bytes);
+                if (file.position === file.length) {
+                    jpeg.push();
+                    file.close();
+                    file = undefined;
+                }
+                if (jpeg.ready) break;
+            }
+
+            while (jpeg.ready) {
+                const block = jpeg.read();
+                this.begin(block.x, block.y, block.width, block.height);
+                this.drawBitmap(block, block.x, block.y);
+                this.end();
+            }
         }
+    } catch (error) {
+        trace(`screen.js: ${error}\n`);
+        return false;
+    } finally {
+        render.begin();
     }
+
+    return true;
 }
