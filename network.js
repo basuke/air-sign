@@ -74,7 +74,7 @@ export class HandyServer extends Server {
                     }
 
                 case Server.requestFragment:
-					const fragment = this.read(ArrayBuffer, arg1);
+                    const fragment = this.socket.read(ArrayBuffer, arg1);
                     file.write(fragment);
                     break;
 

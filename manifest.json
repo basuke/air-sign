@@ -23,7 +23,6 @@
 		]
 	},
 	"config": {
-		"rotation": 270
 	},
 	"preload": [
 		"http"

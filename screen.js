@@ -2,7 +2,6 @@
  * Copyright (c) 2020 Basuke
 */
 
-import config from "mc/config";
 import Poco from "commodetto/Poco";
 import JPEG from "commodetto/readJPEG";
 import { File } from "file";
@@ -15,7 +14,12 @@ export const fonts = {
     L: parseBMF(new Resource("OpenSans-Semibold-28.bf4")),
 };
 
-const render = new Poco(screen, { displayListLength: 2048, rotation: config.rotation });
+
+if (screen.rotation !== undefined) {
+    screen.rotation = 270;
+}
+
+export const render = new Poco(screen, { displayListLength: 2048 });
 
 export function getDimention() {
     return { width: render.width, height:render.height };
@@ -90,13 +94,11 @@ export function makeColor(name) {
     return render.makeColor(red, green, blue);
 }
 
-render.drawJpeg = function(path) {
-    const jpeg = new JPEG();
-    let file = new File(path);
-
+export function drawOntoJpeg(path, task) {
     try {
-        render.end();
-
+        const jpeg = new JPEG();
+        let file = new File(path);
+    
         while (file) {
             while (file) {
                 const bytes = file.read(ArrayBuffer, 1024);
@@ -111,16 +113,15 @@ render.drawJpeg = function(path) {
 
             while (jpeg.ready) {
                 const block = jpeg.read();
-                this.begin(block.x, block.y, block.width, block.height);
-                this.drawBitmap(block, block.x, block.y);
-                this.end();
+                render.begin(block.x, block.y, block.width, block.height);
+                render.drawBitmap(block, block.x, block.y);
+                task(render);
+                render.end();
             }
         }
     } catch (error) {
         trace(`screen.js: ${error}\n`);
         return false;
-    } finally {
-        render.begin();
     }
 
     return true;

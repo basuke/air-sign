@@ -17,6 +17,7 @@ import {
     getDimention,
     makeColor,
     draw,
+    drawOntoJpeg,
     fonts
 } from "screen";
 
@@ -53,33 +54,33 @@ function reset() {
 function update() {
     const {text, color, background, font, image} = params;
 
-    trace(`${text}\n`);
-    draw(render => {
-        if (background !== undefined) {
+    const task = render => {
+        if (!image && background !== undefined) {
             render.fillRectangle(background, 0, 0, render.width, render.height);
-        }
-
-        if (image) {
-            if (!render.drawJpeg(image)) {
-                trace("Failed to render this JPEG.\n");
-                params.image = null;
-                Timer.set(update, 0);
-                return;
-            }
         }
 
         if (text && color !== undefined) {
             const lines = text.split("\n");
             let y = (render.height - font.height * lines.length) >> 1;
-
+    
             for (const line of lines) {
                 render.drawText(line, font, color,
                     (render.width - render.getTextWidth(line, font)) >> 1, y);
                 y += font.height;
             }
         }
-    });
-}
+    };
+
+    if (image) {
+        if (!drawOntoJpeg(image, task)) {
+            trace("Failed to render this JPEG.\n");
+            params.image = null;
+            Timer.set(update, 0);
+        }
+    } else {
+        draw(task);
+    }
+    }
 
 const server = new HandyServer({
     port,
