@@ -9,35 +9,6 @@ export function registerHostName(hostName, callback) {
     });
 }
 
-class Request {
-    constructor(method, path) {
-        this.method = method;
-        this.path = path;
-        this.contentType = "application/octed";
-        this.contentLength = undefined;
-        this.body = undefined;
-        this.file = undefined;
-    }
-
-    receiveHeader(name, value) {
-        switch (name.toLowerCase()) {
-            case 'content-type':
-                this.contentType = value;
-                break;
-            
-            case 'content-length':
-                this.contentLength = value;
-                break;
-        }
-    }
-
-    log() {
-        trace(`${this.method} ${this.path}\n`);
-        if (this.body) trace(`length: ${this.contentLength}\n${this.body}\n`);
-        if (this.file) trace(`length: ${this.contentLength}\n<${this.file}>\n`);
-    }
-};
-
 const cacheFileName = 'cache';
 
 export class HandyServer extends Server {
@@ -47,7 +18,6 @@ export class HandyServer extends Server {
         const verbose = dictionary.verbose;
         const root = dictionary.root;
 
-        let request = undefined;
         let file = undefined;
 
         const server = this;
@@ -55,21 +25,29 @@ export class HandyServer extends Server {
         this.callback = function(message, arg1, arg2) {
             switch (message) {
                 case Server.status:
-                    request = new Request(arg2, arg1);
+                    this.method = arg2;
+                    this.path = arg1;
+                    this.contentType = "application/octed";
+                    this.body = undefined;
+                    this.file = undefined;
                     break;
 
                 case Server.header:
-                    request.receiveHeader(arg1, arg2);
+                    switch (arg1) {
+                        case 'content-type':
+                            this.contentType = arg2;
+                            break;
+                    }
                     break;
 
                 case Server.headersComplete:
-                    if (request.contentLength >= 1024) {
+                    if (this.total >= 1024) {
                         if (File.exists(root + cacheFileName))
                             File.delete(root + cacheFileName);
                         file = new File(root + cacheFileName, true);
                         return true; // handling by myself
                     } else {
-                        const [type, subtype] = request.contentType.split('/');
+                        const [type, subtype] = this.contentType.split('/');
                         return type === 'text' || subtype === 'x-www-form-urlencoded' ? String : ArrayBuffer;
                     }
 
@@ -83,19 +61,14 @@ export class HandyServer extends Server {
                         file.close();
                         file = undefined;
 
-                        request.file = root + cacheFileName;
+                        this.file = root + cacheFileName;
                     } else {
-                        request.body = arg1;
+                        this.body = arg1;
                     }
                     break;
 
                 case Server.prepareResponse:
-                    if (verbose) request.log();
-                    return server.onRequest(request);
-
-                case Server.responseComplete:
-                    request = undefined;
-                    break;
+                    return server.onRequest(this);
             }
         };
     }
