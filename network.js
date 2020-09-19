@@ -70,7 +70,7 @@ export class HandyServer extends Server {
                         return true; // handling by myself
                     } else {
                         const [type, subtype] = request.contentType.split('/');
-                        return type === 'text' ? String : ArrayBuffer;
+                        return type === 'text' || subtype === 'x-www-form-urlencoded' ? String : ArrayBuffer;
                     }
 
                 case Server.requestFragment:
@@ -159,8 +159,10 @@ export function notFound() {
     return errorResponse("Not found", 403);
 }
 
-export function ifTypeIs(expectedType, contentType, prepareIt, doIt, update) {
-    if (contentType !== expectedType) return errorResponse("Text only");
+export function ifTypeIs(expectedTypes, contentType, prepareIt, doIt, update) {
+    if (!expectedTypes.includes(contentType)) {
+        return errorResponse(`Content-type must be one of ${expectedTypes.join(', ')}\n`);
+    }
 
     const value = prepareIt();
     if (value === undefined) return errorResponse("Invalid value");

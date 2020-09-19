@@ -31,18 +31,19 @@ let hostName = undefined;
 
 registerHostName(config.hostname ?? "air-sign", value => {
     hostName = value;
-    params.text = url();
+    params.text = initialText();
     update();
 });
 
-function url() {
-    return 'http://' + (hostName ? hostName + '.local' : Net.get("IP"));
+function initialText() {
+    const text = hostName ? `http://${hostName}.local\nor\n` : '';
+    return text + `http://${Net.get("IP")}`;
 }
 
 const params = {};
 
 function reset() {
-    params.text = url();
+    params.text = initialText();
     params.color = makeColor('white');
     params.background = makeColor('black');
     params.font = fonts.L;
@@ -89,6 +90,7 @@ const server = new HandyServer({
 });
 
 const textType = 'text/plain';
+const formType = 'application/x-www-form-urlencoded';
 const imageType = 'image/jpeg';
 
 server.onGet = ({path}) => {
@@ -112,8 +114,8 @@ server.onGet = ({path}) => {
 };
 
 server.onPost = ({path, contentType, body, file}) => {
-    const ifText = (prepareIt, doIt) => ifTypeIs(textType, contentType, prepareIt, doIt, update);
-    const ifImage = (prepareIt, doIt) => ifTypeIs(imageType, contentType, prepareIt, doIt, update);
+    const ifText = (prepareIt, doIt) => ifTypeIs([textType, formType], contentType, prepareIt, doIt, update);
+    const ifImage = (prepareIt, doIt) => ifTypeIs([imageType], contentType, prepareIt, doIt, update);
 
     switch (path) {
         case '/busy': {
