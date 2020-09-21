@@ -6,7 +6,6 @@ import Net from "net"
 import config from "mc/config";
 import Timer from "timer";
 import Resource from "Resource";
-import Preference from "preference";
 import {
     HandyServer,
     ifTypeIs,
@@ -24,6 +23,7 @@ import {
     drawOntoJpeg,
     fonts
 } from "screen";
+import params from "params";
 
 const port = config.port ? parseInt(config.port) : 80;
 if (!port) {
@@ -47,54 +47,6 @@ registerHostName(config.hostname ?? "air-sign", value => {
 function initialText() {
     const text = hostName ? `http://${hostName}.local\nor\n` : '';
     return text + `http://${Net.get("IP")}`;
-}
-
-const domain = 'air-sign';
-
-const params = {
-    version: 2,
-
-    read(key) { return Preference.get(domain, key) },
-    write(key, value) {
-        if (value === null || value === undefined) {
-            Preference.delete(domain, key);
-        } else {
-            Preference.set(domain, key, value);
-        }
-    },
-
-    get text() { return this.read('text') },
-    get color() { return this.read('color') },
-    get background() { return this.read('background') },
-    get font() { return this.read('font') },
-    get image() { return this.read('image') },
-
-    set text(value) { this.write('text', value) },
-    set color(value) { this.write('color', value) },
-    set background(value) { this.write('background', value) },
-    set font(value) { this.write('font', value) },
-    set image(value) { this.write('image', value) },
-
-    reset() {
-        this.text = initialText();
-        this.color = 'white';
-        this.background = 'black';
-        this.font = 'L';
-        this.image = null;
-    },
-
-    init() {
-        const savedVersion = this.read('version');
-        if (savedVersion != this.version) {
-            this.write('version', this.version);
-            this.reset();
-        }
-    },
-};
-
-function reset() {
-    params.init();
-    update();
 }
 
 function update() {
@@ -148,7 +100,9 @@ server.onGet = ({path}) => {
             return htmlResponse(new Resource('index.html'));
 
         case '/reset':
-            reset();
+            params.reset();
+            params.text = initialText();
+            update();
             return okResponse();
 
         case '/info':
@@ -246,4 +200,6 @@ server.onDelete = ({path}) => {
     return okResponse();
 };
 
-reset();
+params.init();
+if (!params.text) params.text = initialText();
+update();

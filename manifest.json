@@ -11,6 +11,7 @@
 		"*": [
 			"./main",
 			"./network",
+			"./params",
 			"./screen",
 			"$(MODULES)/network/http/*"
 		],
