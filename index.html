@@ -1,0 +1,233 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width">
+        <title>air-sign</title>
+    </head>
+    <body>
+        <div class=container>
+            <h1>air-sign</h1>
+            <main>
+                <div>
+                    <button id=open>Free</button>
+                    <button id=busy>Busy</button>
+                </div>
+                <hr>
+                <div>
+                    <h2>Custom message</h2>
+                    <textarea id=message></textarea>
+                    <button id=set-message>Set</button>
+                </div>
+                <hr>
+                <div class=color-panel id=text>
+                    <h2>Text Color</h2>
+                    <button>black</button>
+                    <button>silver</button>
+                    <button>gray</button>
+                    <button>white</button>
+                    <button>maroon</button>
+                    <button>red</button>
+                    <button>purple</button>
+                    <button>fuchsia</button>
+                    <button>green</button>
+                    <button>lime</button>
+                    <button>olive</button>
+                    <button>yellow</button>
+                    <button>navy</button>
+                    <button>blue</button>
+                    <button>teal</button>
+                    <button>aqua</button>
+                    <button>orange</button>
+                </div>
+                <hr>
+                <div class=color-panel id=background>
+                    <h2>Background Color</h2>
+                    <button>black</button>
+                    <button>silver</button>
+                    <button>gray</button>
+                    <button>white</button>
+                    <button>maroon</button>
+                    <button>red</button>
+                    <button>purple</button>
+                    <button>fuchsia</button>
+                    <button>green</button>
+                    <button>lime</button>
+                    <button>olive</button>
+                    <button>yellow</button>
+                    <button>navy</button>
+                    <button>blue</button>
+                    <button>teal</button>
+                    <button>aqua</button>
+                    <button>orange</button>
+                </div>
+                <hr>
+                <div>
+                    <button id="delete-image">Delete Image</button>
+                </div>
+            </main>
+        </div>
+
+        <style>
+            body, button, textarea {
+                font-size: 24px;
+                font-family:Arial, Helvetica, sans-serif;
+            }
+
+            .container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            main {
+                max-width: 800px;
+            }
+
+            textarea {
+                display: block;
+                width: 100%;
+                margin-bottom: 0.3em;
+            }
+
+            h1, h2, h3, h4 {
+                margin-top: 0.1em;
+                margin-bottom: 0;
+            }
+
+            button {
+                display: inline-block;
+                padding: 0.3em 1em;
+                margin-bottom: 0.2em;
+                text-decoration: none;
+                color: white;
+                background: #444;
+                border: 1px solid transparent;
+                border-radius: 6px;
+                transition: .4s;
+            }
+
+            button:hover {
+                background: #888;
+            }
+
+            button:active {
+                background: #67c5ff;
+            }
+
+            button:focus {
+                outline: none;
+            }
+
+            #open {
+                background-color: green;
+            }
+
+            #busy {
+                background-color: orangered;
+            }
+
+            .color-panel > button {
+                color: transparent;
+            }
+
+        </style>
+
+        <script>
+            function setup(info) {
+                /*
+                const info = {
+                    width: 320,
+                    height: 240,
+                    ssid: "SuzukiWiFi",
+                    hostName: "office-sign",
+                    ip: "192.168.186.5",
+                    fonsts: ["S", "M", "L"],
+                };
+                */
+
+                document.querySelector('h1').textContent = info.hostName ?? info.ip ?? 'air-sign';
+
+                on('#open', 'click', event => post('/open'));
+                on('#busy', 'click', event => post('/busy'));
+                on('#set-message', 'click', event => setMessage('/image'));
+                on('#delete-image', 'click', event => del('/image'));
+
+                // color buttons for background
+                document.querySelectorAll('#background > button').forEach(elm => {
+                    const color = elm.textContent.toLowerCase();
+                    makeColorButton(elm, color);
+                    elm.addEventListener('click', ev => backgroundColor(color));
+                });
+
+                // color buttons for text
+                document.querySelectorAll('#text > button').forEach(elm => {
+                    const color = elm.textContent.toLowerCase();
+                    makeColorButton(elm, color);
+                    elm.addEventListener('click', ev => textColor(color));
+                });
+            }
+
+            const url = path => `http://${location.host}${path}`;
+
+            const defaultParams = {
+                method: 'GET',
+                mode: 'same-origin',
+                cache: 'no-cache',
+                referrerPolicy: 'no-referrer',
+            };
+
+            async function get(path) {
+                return fetch(url(path), defaultParams);
+            }
+
+            async function post(path, body = "", type = 'text/plain') {
+                return fetch(url(path), {
+                    ...defaultParams,
+                    method: 'POST',
+                    headers: { 'Content-Type': type },
+                    body,
+                });
+            }
+
+            async function del(path) {
+                return fetch(url(path), {
+                    ...defaultParams,
+                    method: 'DELETE'
+                });
+            }
+
+            function on(selector, event, action) {
+                document.querySelector(selector).addEventListener(event, action);
+            }
+
+            async function setMessage() {
+                const body = document.querySelector('#message').value;
+                post('/text', body);
+            }
+
+            async function textColor(color) {
+                post('/color', color);
+            }
+
+            async function backgroundColor(color) {
+                post('/background', color);
+            }
+
+            function makeColorButton(elm, color) {
+                let style = "background-color: " + color;
+                if (color === 'white') {
+                    style += "; border-color: gray";
+                }
+
+                elm.style = style;
+                elm.textContent = '.';
+            }
+
+            window.onload = () => {
+                get('/info').then(response => response.json()).then(info => {
+                    console.log(info);
+                    setup(info);
+                }).catch(err => setup({}));
+            };
+        </script>
+    </body>
+</html>

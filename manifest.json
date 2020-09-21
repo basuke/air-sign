@@ -22,7 +22,10 @@
 			"$(MODDABLE)/examples/assets/fonts/OpenSans-Semibold-28"
 		]
 	},
-	"config": {
+	"data": {
+		"*": [
+			"./index"
+		]
 	},
 	"preload": [
 		"http"

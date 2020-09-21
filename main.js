@@ -5,9 +5,11 @@
 import Net from "net"
 import config from "mc/config";
 import Timer from "timer";
+import Resource from "Resource";
 import {
     HandyServer,
     ifTypeIs,
+    htmlResponse,
     jsonResponse,
     okResponse,
     notFound,
@@ -95,6 +97,9 @@ const imageType = 'image/jpeg';
 
 server.onGet = ({path}) => {
     switch (path) {
+        case '/':
+            return htmlResponse(new Resource('index.html'));
+
         case '/reset':
             reset();
             return okResponse();

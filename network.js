@@ -68,7 +68,20 @@ export class HandyServer extends Server {
                     break;
 
                 case Server.prepareResponse:
-                    return server.onRequest(this);
+                    const response = server.onRequest(this);
+                    if (response.data)  {
+                        this.data = response.data;
+                        this.position = 0;
+                    }
+                    return response;
+
+                case Server.responseFragment:
+                    if (this.position >= this.data.byteLength)
+                        return;
+        
+                    const chunk = this.data.slice(this.position, this.position + arg1);
+                    this.position += chunk.byteLength;
+                    return chunk;
             }
         };
     }
@@ -108,16 +121,31 @@ function makeHeaders(headers) {
     return result;
 }
 
-export function response(body, status, headers = {}) {
-    return {body, status, headers: makeHeaders(headers)};
+export function response(body, status, type = undefined, headers = {}) {
+    if (type !== undefined) headers["Content-Type"] = type;
+
+    let data = null;
+
+    if (body && body.byteLength) {
+        data = body;
+        body = true;
+
+        headers["Content-Length"] = data.byteLength;
+    }
+
+    return {body, data, status, headers: makeHeaders(headers)};
 }
 
 export function textResponse(text, status = 200, headers = {}) {
-    return response(text, status, { "Content-Type": "text/plain", ...headers });
+    return response(text, status, "text/plain", headers);
+}
+
+export function htmlResponse(text, status = 200, headers = {}) {
+    return response(text, status, "text/html; charset=utf-8", headers);
 }
 
 export function jsonResponse(data, status = 200, headers = {}) {
-    return response(JSON.stringify(data) + "\n", status, { "Content-Type": "application/json", ...headers });
+    return response(JSON.stringify(data) + "\n", status, "application/json", headers);
 }
 
 export function okResponse(status = 200, headers = {}) {
