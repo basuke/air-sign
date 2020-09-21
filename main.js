@@ -6,6 +6,7 @@ import Net from "net"
 import config from "mc/config";
 import Timer from "timer";
 import Resource from "Resource";
+import Preference from "preference";
 import {
     HandyServer,
     ifTypeIs,
@@ -17,6 +18,7 @@ import {
 } from "network";
 import {
     getDimention,
+    checkColor,
     makeColor,
     draw,
     drawOntoJpeg,
@@ -32,9 +34,14 @@ if (!port) {
 let hostName = undefined;
 
 registerHostName(config.hostname ?? "air-sign", value => {
+    const isInitialTextDisplayed = params.text == initialText();
+
     hostName = value;
-    params.text = initialText();
-    update();
+
+    if (isInitialTextDisplayed) {
+        params.text = initialText();
+        update();
+    }
 });
 
 function initialText() {
@@ -42,20 +49,60 @@ function initialText() {
     return text + `http://${Net.get("IP")}`;
 }
 
-const params = {};
+const domain = 'air-sign';
+
+const params = {
+    version: 2,
+
+    read(key) { return Preference.get(domain, key) },
+    write(key, value) {
+        if (value === null || value === undefined) {
+            Preference.delete(domain, key);
+        } else {
+            Preference.set(domain, key, value);
+        }
+    },
+
+    get text() { return this.read('text') },
+    get color() { return this.read('color') },
+    get background() { return this.read('background') },
+    get font() { return this.read('font') },
+    get image() { return this.read('image') },
+
+    set text(value) { this.write('text', value) },
+    set color(value) { this.write('color', value) },
+    set background(value) { this.write('background', value) },
+    set font(value) { this.write('font', value) },
+    set image(value) { this.write('image', value) },
+
+    reset() {
+        this.text = initialText();
+        this.color = 'white';
+        this.background = 'black';
+        this.font = 'L';
+        this.image = null;
+    },
+
+    init() {
+        const savedVersion = this.read('version');
+        if (savedVersion != this.version) {
+            this.write('version', this.version);
+            this.reset();
+        }
+    },
+};
 
 function reset() {
-    params.text = initialText();
-    params.color = makeColor('white');
-    params.background = makeColor('black');
-    params.font = fonts.L;
-    params.image = null;
-
+    params.init();
     update();
 }
 
 function update() {
-    const {text, color, background, font, image} = params;
+    const {text, image} = params;
+
+    const color = params.color ? makeColor(params.color) : undefined;
+    const background = (!image && params.background) ? makeColor(params.background) : undefined;
+    const font = fonts[params.font];
 
     const task = render => {
         if (!image && background !== undefined) {
@@ -83,7 +130,7 @@ function update() {
     } else {
         draw(task);
     }
-    }
+}
 
 const server = new HandyServer({
     port,
@@ -127,8 +174,8 @@ server.onPost = ({path, contentType, body, file}) => {
             const message = body ?? "BUSY!";
             return ifText(() => message, value => {
                 params.text = value;
-                params.color = makeColor('white');
-                params.background = makeColor('maroon');
+                params.color = 'white';
+                params.background = 'maroon';
             });
         }
 
@@ -136,8 +183,8 @@ server.onPost = ({path, contentType, body, file}) => {
             const message = body ?? "Good to go!";
             return ifText(() => message, value => {
                 params.text = value;
-                params.color = makeColor('white');
-                params.background = makeColor('green');
+                params.color = 'white';
+                params.background = 'green';
             });
         }
 
@@ -145,13 +192,13 @@ server.onPost = ({path, contentType, body, file}) => {
             return ifText(() => body, value => params.text = value);
 
         case '/color':
-            return ifText(() => makeColor(body), value => params.color = value);
+            return ifText(() => checkColor(body) ? body : undefined, value => params.color = value);
 
         case '/background':
-            return ifText(() => makeColor(body), value => params.background = value);
+            return ifText(() => checkColor(body) ? body : undefined, value => params.background = value);
     
         case '/font':
-            return ifText(() => fonts[body], value => params.font = value);
+            return ifText(() => body in fonts ? body : undefined, value => params.font = value);
 
         case '/image':
             return ifImage(() => file ? file : body, value => params.image = value);
@@ -167,7 +214,7 @@ server.onDelete = ({path}) => {
             params.text = undefined;
             params.color = undefined;
             params.background = undefined;
-            params.font = fonts.L;
+            params.font = 'L';
             params.image = undefined;
             break;
 
@@ -184,7 +231,7 @@ server.onDelete = ({path}) => {
             break;
 
         case '/font':
-            params.font = fonts.L;
+            params.font = 'L';
             break;
 
         case '/image':

@@ -39,7 +39,7 @@ function hex(str, offset, count) {
 }
 
 function rgba(name) {
-    if (!name) return [0, 0, 0, 0];
+    if (!name) return false;
 
     const cssColors = {
         black: [0x00, 0x00, 0x00, 0xff],
@@ -84,14 +84,20 @@ function rgba(name) {
                 green = hex(name, 3, 2);
                 blue = hex(name, 5, 2);
                 break;
+
+            default:
+                return false;
         }
     }
     return [red, green, blue, alpha];
 }
 
 export function makeColor(name) {
-    const [red, green, blue, alpha] = rgba(name);
-    return render.makeColor(red, green, blue);
+    return render.makeColor(...(rgba(name) ?? [0, 0, 0, 0]));
+}
+
+export function checkColor(name) {
+    return !!rgba(name);
 }
 
 export function drawOntoJpeg(path, task) {
