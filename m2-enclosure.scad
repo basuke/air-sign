@@ -153,8 +153,19 @@ module enclosure() {
         }
 
         module back() {
+            module cutOut() {
+                dx = 12;
+                dy = 8;
+
+                translate([dx, dy, 0])
+                    cube([width - T - dx * 2, base_height - dy * 2, T]);
+            }
+
             translate([0, T, 0])
-                cube([width - T, base_height, T]);
+                difference() {
+                    cube([width - T, base_height, T]);
+                    scale([1, 1, 1.1]) translate([0, 0, -0.01]) cutOut();
+                }
         }
 
         union() {
