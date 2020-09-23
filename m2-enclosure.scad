@@ -98,6 +98,33 @@ module enclosure() {
                 cylinder(r=hole_radius, h=h);
         }
 
+        module rightStopper() {
+            y = 10;
+            stopper_height = T + C + panel_depth + body_depth + T;
+            translate([T + C + max_width, (height - y) / 2, 0]) union() {
+               cube([T, y, stopper_height]);
+               translate([-T, 0, stopper_height - T]) cube([T * 2, y, T]);
+            }
+        }
+
+        module leftStopper(isTop) {
+            radius = 1;
+            length = 4;
+            z = T + C + panel_depth + body_depth + radius;
+
+            module body() {
+                translate([T + C, T, z])
+                    rotate([0, 90, 0])
+                        cylinder(r=radius, h=length);
+            }
+
+            if (isTop)
+                body();
+            else
+                translate([0, max_height + C * 2, 0])
+                    body();
+        }
+
         module base() {
             union() {
                 front();
@@ -105,10 +132,9 @@ module enclosure() {
                 bottom();
                 right();
 
-                mounterPole(true, true);
-                mounterPole(true, false);
-                mounterPole(false, true);
-                mounterPole(false, false);
+                rightStopper();
+                leftStopper(true);
+                leftStopper(false);
             }
         }
 
