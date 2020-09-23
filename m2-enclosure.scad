@@ -48,8 +48,8 @@ module enclosure() {
 
     module cover(flip=false) {
         module screenHole() {
-            left = panel_offset_left + screen_offset_left;
-            top = panel_offset_top + screen_offset_top;
+            left = T + C + panel_offset_left + screen_offset_left;
+            top = T + C + panel_offset_top + screen_offset_top;
 
             translate([left + C, top + C, 0]) cube([screen_width, screen_height, T]);
         }
@@ -113,7 +113,8 @@ module enclosure() {
         }
 
         if (flip)
-            base();
+            translate([0, height * 1.2, 0])
+                base();
         else
             translate([0, height, depth])
                 rotate([180, 0, 0])
@@ -163,8 +164,7 @@ module enclosure() {
         }
     }
 
-    translate([0, height * 1.2, 0])
-        color("white") cover(flip=true);
+    color("white") cover(flip=false);
     color("green") base();
 }
 
