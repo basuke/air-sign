@@ -124,32 +124,32 @@ module enclosure() {
     module base() {
         base_height = height - T * 2;
 
-        module usbCutoout() {
+        module usbCutOut() {
             cutout_width = 15;
             cutout_height = 10;
-            cutout_center_from_bottom = 10.75;
+            cutout_center_from_bottom = 11.60;
             usb_height = 3.60;
 
-            cutout_y = T + C + cutout_center_from_bottom - cutout_width / 2;
+            cutout_y = cutout_center_from_bottom - cutout_width / 2;
             cutout_z = depth - T - panel_depth - body_depth - usb_height / 2 - cutout_height / 2;
 
             translate([0, cutout_y, cutout_z])
                 cube([T, cutout_width, cutout_height]);
         }
 
-        module left() {
-            translate([0, T, 0])
+        module left() { // USB Connector side
+            translate([0, T + C, 0])
                 difference() {
-                    cube([T, base_height, depth - T]);
+                    cube([T, base_height - C * 2, depth - T]);
                     scale([1.1, 1, 1])
                         translate([-0.01, 0, 0])
-                            usbCutoout();
+                            usbCutOut();
                 }
         }
 
-        module right() {
+        module right() { // To hold the cover 
             translate([width - T * 2, T + C, 0])
-                cube([T, base_height - C * 2, (depth - T) * 0.96]);
+                cube([T, base_height - C * 2, depth - T]);
         }
 
         module back() {
