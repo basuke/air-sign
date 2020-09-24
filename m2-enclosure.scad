@@ -1,5 +1,3 @@
-$fa = 1;
-$fs = 0.1;
 Flip = true;
 SnapRadius = 0.7;
 SnapCount = 10;
@@ -57,7 +55,7 @@ module enclosure() {
             translate([-radius, -radius, 0])
                 difference() {
                     translate([0, 0, -D]) cube([radius + D, radius + D, h]);
-                    translate([0, 0, -D * 2]) cylinder(r=T, h=h + D * 2);
+                    translate([0, 0, -D * 2]) cylinder(r=T, h=h + D * 2, $fn=60);
                 }
     }
 
@@ -67,7 +65,7 @@ module enclosure() {
 
         for (i=[0:SnapCount - 1]) {
             translate([SnapMargin + i * dx, 0, 0])
-            sphere(r=radius);
+            sphere(r=radius, $fn=20);
         }
         
     }
