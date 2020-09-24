@@ -114,6 +114,9 @@ server.onGet = ({path}) => {
                 ...getDimention(),
             });
 
+        case '/status':
+            return jsonResponse(params.status());
+
         default:
             return notFound();
     }

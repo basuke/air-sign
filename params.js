@@ -41,6 +41,16 @@ export const params = {
             this.reset();
         }
     },
+
+    status() {
+        return {
+            text: this.text,
+            color: this.color,
+            background: this.background,
+            font: this.font,
+            image: this.image,
+        };
+    }
 };
 
 export default params;
