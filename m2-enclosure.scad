@@ -1,5 +1,5 @@
 $fa = 1;
-$fs = 0.4;
+$fs = 0.1;
 
 module enclosure() {
 
@@ -20,10 +20,10 @@ module enclosure() {
     panel_offset_top = 2.10;
 
     // Screen
-    screen_width = 50.10;
-    screen_height = 38.47;
-    screen_offset_left = 11.02;
-    screen_offset_top = 3.42;
+    screen_width = 49.48;
+    screen_height = 37.57;
+    screen_offset_left = 11.76;
+    screen_offset_top = 4.02;
 
     // Entire dimmension
     max_width = body_width;
@@ -45,6 +45,28 @@ module enclosure() {
     width = left_width * 2 + screen_width; // max_width + C * 2 + T * 2;
     height = max_height + C * 2 + T * 2;
     depth = max_depth + C * 2 + T * 2 + S;
+
+    module rCutOut(radius=T, height=1, rotate=0) {
+        D = 0.1;
+        h = height + D * 2;
+        rotate([0, 0, 180 + rotate])
+            translate([-radius, -radius, 0])
+                difference() {
+                    translate([0, 0, -D]) cube([radius + D, radius + D, h]);
+                    translate([0, 0, -D * 2]) cylinder(r=T, h=h + D * 2);
+                }
+    }
+
+    module snap(margin, count = 16) {
+        radius = 0.7;
+        dx = (width - margin * 2) / (count - 1);
+
+        for (i=[0:count - 1]) {
+            translate([margin + i * dx, 0, 0])
+            sphere(r=radius);
+        }
+        
+    }
 
     module cover(flip=false) {
         module screenHole() {
@@ -109,7 +131,7 @@ module enclosure() {
 
         module leftStopper(isTop) {
             radius = 1;
-            length = 4;
+            length = 8;
             z = T + C + panel_depth + body_depth + radius;
 
             module body() {
@@ -126,15 +148,24 @@ module enclosure() {
         }
 
         module base() {
-            union() {
-                front();
-                top();
-                bottom();
-                right();
+            difference() {
+                union() {
+                    front();
+                    top();
+                    bottom();
+                    right();
 
-                rightStopper();
-                leftStopper(true);
-                leftStopper(false);
+                    rightStopper();
+                    leftStopper(true);
+                    leftStopper(false);
+
+                    translate([0, T, depth - T / 2]) snap(5);
+                    translate([0, height - 2 * T, depth - T / 2]) snap(5);
+                }
+                rCutOut(height=depth);
+                translate([width, 0, 0]) rCutOut(height=depth, rotate=90);
+                translate([width, height, 0]) rCutOut(height=depth, rotate=180);
+                translate([0, height, 0]) rCutOut(height=depth, rotate=270);
             }
         }
 
@@ -191,6 +222,8 @@ module enclosure() {
                 difference() {
                     cube([width - T, base_height, T]);
                     scale([1, 1, 1.1]) translate([0, 0, -0.01]) cutOut();
+                    translate([0, 0, T / 2]) snap(5);
+                    translate([0, height - 2 * T, T / 2]) snap(5);
                 }
         }
 
@@ -201,7 +234,7 @@ module enclosure() {
         }
     }
 
-    color("white") cover(flip=false);
+    color("white") cover(flip=true);
     color("green") base();
 }
 
