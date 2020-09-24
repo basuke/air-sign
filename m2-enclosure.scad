@@ -1,6 +1,9 @@
 $fa = 1;
 $fs = 0.1;
 Flip = true;
+SnapRadius = 0.7;
+SnapCount = 10;
+SnapMargin = 6;
 
 module enclosure() {
 
@@ -58,12 +61,12 @@ module enclosure() {
                 }
     }
 
-    module snap(margin, count = 16) {
-        radius = 0.7;
-        dx = (width - margin * 2) / (count - 1);
+    module snap() {
+        radius = SnapRadius;
+        dx = (width - SnapMargin * 2) / (SnapCount - 1);
 
-        for (i=[0:count - 1]) {
-            translate([margin + i * dx, 0, 0])
+        for (i=[0:SnapCount - 1]) {
+            translate([SnapMargin + i * dx, 0, 0])
             sphere(r=radius);
         }
         
@@ -170,8 +173,8 @@ module enclosure() {
                     leftStopper(true);
                     leftStopper(false);
 
-                    translate([0, T, depth - T / 2]) snap(5);
-                    translate([0, height - 2 * T, depth - T / 2]) snap(5);
+                    translate([0, T, depth - T / 2]) snap();
+                    translate([0, height - T, depth - T / 2]) snap();
                 }
                 rCutOut(height=depth);
                 translate([width, 0, 0]) rCutOut(height=depth, rotate=90);
@@ -233,8 +236,8 @@ module enclosure() {
                 difference() {
                     cube([width - T, base_height, T]);
                     scale([1, 1, 1.1]) translate([0, 0, -0.01]) cutOut();
-                    translate([0, 0, T / 2]) snap(5);
-                    translate([0, height - 2 * T, T / 2]) snap(5);
+                    translate([0, 0, T / 2]) snap();
+                    translate([0, height - 2 * T, T / 2]) snap();
                 }
         }
 
