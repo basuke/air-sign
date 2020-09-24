@@ -148,6 +148,10 @@ export function jsonResponse(data, status = 200, headers = {}) {
     return response(JSON.stringify(data) + "\n", status, "application/json", headers);
 }
 
+export function fileResponse(path, status, type, filename) {
+    return response(fileObject, status, type, headers);
+}
+
 export function okResponse(status = 200, headers = {}) {
     return jsonResponse({success:true}, status, headers);
 }
