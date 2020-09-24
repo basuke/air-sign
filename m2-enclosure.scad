@@ -1,9 +1,10 @@
 $fa = 1;
 $fs = 0.1;
+Flip = true;
 
 module enclosure() {
 
-    C = 0.3; // clearance
+    C = 0.25; // clearance
     T = 2; // basic thickness
     S = 2; // space between base and Moddable Two
 
@@ -70,16 +71,26 @@ module enclosure() {
 
     module cover(flip=false) {
         module screenHole() {
+            function scaleForAngle(length, height, angle) =
+                (length + 2 * height * tan(angle)) / length;
+            function scalesForAngle(width, height, depth, angle) =
+                [scaleForAngle(width, depth, angle), scaleForAngle(height, depth, angle)];
+
             left = T + C + panel_offset_left + screen_offset_left;
             top = T + C + panel_offset_top + screen_offset_top;
+            scale = scalesForAngle(screen_width, screen_height, T, 45);
 
-            translate([left + C, top + C, 0]) cube([screen_width, screen_height, T]);
+            translate([left + C, top + C, 0])
+                translate([screen_width / 2, screen_height / 2, T])
+                    rotate([180, 0, 0])
+                        linear_extrude(height=T, scale=scale)
+                            square([screen_width, screen_height], center=true);
         }
 
         module front() {
             difference() {
                 cube([width, height, T]);
-                translate([0, 0, -0.01]) scale([1, 1, 1.01]) screenHole();
+                translate([0, 0, -0.001]) scale([1, 1, 1.01]) screenHole();
             }
         }
 
@@ -234,7 +245,7 @@ module enclosure() {
         }
     }
 
-    color("white") cover(flip=true);
+    color("white") cover(flip=Flip);
     color("green") base();
 }
 
