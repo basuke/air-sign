@@ -1,7 +1,7 @@
 Flip = true;
 SnapRadius = 0.7;
-SnapCount = 10;
-SnapMargin = 6;
+SnapCount = 4;
+SnapMargin = 20;
 
 module enclosure() {
 
@@ -16,16 +16,16 @@ module enclosure() {
 
     // LCD panel
     panel_width = 66.68;
-    panel_height = 44.23;
+    panel_height = 44.45;
     panel_depth = 1.04;
-    panel_offset_left = 9.34;
-    panel_offset_top = 2.10;
+    panel_offset_left = 9.04;
+    panel_offset_top = 1.80;
 
     // Screen
     screen_width = 49.48;
-    screen_height = 37.57;
-    screen_offset_left = 11.76;
-    screen_offset_top = 4.02;
+    screen_height = 37.11;
+    screen_offset_left = 11.55;
+    screen_offset_top = 3.38;
 
     // Entire dimmension
     max_width = body_width;
@@ -39,6 +39,9 @@ module enclosure() {
     hole_offset_top = 1.60;
     hole_offset_right = 1.2;
     hole_offset_bottom = 1.2;
+
+    // Bigger pins
+    pin_top = 7.78;
 
     // Whole model
         // adjustment. make left and right side equal width.
@@ -149,7 +152,7 @@ module enclosure() {
             module body() {
                 translate([T + C, T, z])
                     rotate([0, 90, 0])
-                        cylinder(r=radius, h=length);
+                        cylinder(r=radius, h=length, $fn=60);
             }
 
             if (isTop)
@@ -195,7 +198,7 @@ module enclosure() {
 
         module usbCutOut() {
             cutout_width = 15;
-            cutout_height = 10;
+            cutout_height = 20; // was 10, but make cutout through top for convenience. 
             cutout_center_from_bottom = 11.60;
             usb_height = 3.60;
 
