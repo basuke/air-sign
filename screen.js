@@ -2,11 +2,14 @@
  * Copyright (c) 2020 Basuke
 */
 
+import config from "mc/config";
 import Poco from "commodetto/Poco";
 import JPEG from "commodetto/readJPEG";
 import { File } from "file";
 import Resource from "Resource";
 import parseBMF from "commodetto/parseBMF";
+import Timer from "timer";
+import Time from "time";
 
 export const fonts = {
     S: parseBMF(new Resource("OpenSans-Semibold-16.bf4")),
@@ -131,4 +134,85 @@ export function drawOntoJpeg(path, task) {
     }
 
     return true;
+}
+
+const range = n => Array.from(new Array(n).keys());
+
+export function registerTouchHandler(handlers, interval=10) {
+    if (!config.Touch)
+        return;
+
+    const touch = new config.Touch;
+    const touchCount = config.touchCount ? config.touchCount : 1;
+    const points = range(touchCount).map(index => ({index}));
+    const rotate = rotationFunction(screen);
+
+    const timer = Timer.repeat(() => {
+        touch.read(points);
+        const ticks = Time.ticks;
+
+        for (const point of points) {
+            switch (point.state) {
+                case 3:
+                    if (rotate) rotate(point);
+                    // fallthrough
+                case 0:
+                    if (point.began) {
+                        point.ticks = ticks;
+                        handlers.onTouchEnded(point);
+                        delete point.began;
+                        delete point.ticks;
+                        delete point.x;
+                        delete point.y;
+                    }
+                    break;
+
+                case 1:
+                case 2:
+                    if (rotate) rotate(point);
+
+                    if (point.began) {
+                        point.ticks = ticks;
+                        handlers.onTouchMoved(point);
+                    } else {
+                        point.ticks = point.began = ticks;
+                        handlers.onTouchBegan(point);
+                    }
+                    break;
+            }
+        }
+    }, interval);
+
+    return {
+        touch,
+        timer,
+        touchCount,
+        points,
+    };
+}
+
+function rotationFunction(screen) {
+    const {width, height} = screen;
+
+    switch (screen.rotation) {
+        case 90:
+            return point => {
+                const x = point.x;
+                point.x = point.y;
+                point.y = height - x;
+            };
+        case 180:
+            return point => {
+                point.x = width - point.x;
+                point.y = height - point.y;
+            };
+        case 270:
+            return point => {
+                const x = point.x;
+                point.x = width - point.y;
+                point.y = x;
+            };
+        default:
+            return undefined;
+    }
 }

@@ -21,7 +21,8 @@ import {
     makeColor,
     draw,
     drawOntoJpeg,
-    fonts
+    fonts,
+    registerTouchHandler,
 } from "screen";
 import params from "params";
 
@@ -206,3 +207,17 @@ server.onDelete = ({path}) => {
 params.init();
 if (!params.text) params.text = initialText();
 update();
+
+const handler = registerTouchHandler({
+    onTouchBegan({x, y, began, ticks}) {
+        trace(`onTouchBegan: ${x} ${y} ${began} ${ticks - began}\n`);
+    },
+
+    onTouchMoved({x, y, began, ticks}) {
+        trace(`onTouchMoved: ${x} ${y} ${began} ${ticks - began}\n`);
+    },
+
+    onTouchEnded({x, y, began, ticks}) {
+        trace(`onTouchEnded: ${x} ${y} ${began} ${ticks - began}\n`);
+    },
+});
